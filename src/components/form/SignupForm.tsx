@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Link from "next/link";
 import axios from "axios";
+import { useState } from "react"; // Import useState
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,7 @@ const formSchema = z
 export default function SignupForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const [loading, setLoading] = useState(false); // Add loading state
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,10 +52,11 @@ export default function SignupForm() {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setLoading(true); // Set loading to true on submit
     try {
       const response = await axios.post("/api/user", {
-        username: values.username,
-        email: values.email,
+        username: values.username.trim(),
+        email: values.email.trim(),
         password: values.password,
       });
 
@@ -72,6 +75,8 @@ export default function SignupForm() {
           description: error.response.data.message,
         });
       }
+    } finally {
+      setLoading(false); // Set loading to false after submission
     }
   };
 
@@ -86,7 +91,7 @@ export default function SignupForm() {
               <FormItem>
                 <FormLabel>Username</FormLabel>
                 <FormControl>
-                  <Input placeholder="sahil" {...field} />
+                  <Input placeholder="sahil" {...field} disabled={loading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -99,7 +104,11 @@ export default function SignupForm() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="sahil@mail.com" {...field} />
+                  <Input
+                    placeholder="sahil@mail.com"
+                    {...field}
+                    disabled={loading}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -115,6 +124,7 @@ export default function SignupForm() {
                   <Input
                     type="password"
                     placeholder="Enter your password"
+                    disabled={loading}
                     {...field}
                   />
                 </FormControl>
@@ -132,6 +142,7 @@ export default function SignupForm() {
                   <Input
                     type="password"
                     placeholder="Re-enter your password"
+                    disabled={loading}
                     {...field}
                   />
                 </FormControl>
@@ -140,8 +151,8 @@ export default function SignupForm() {
             )}
           />
         </div>
-        <Button className="w-full mt-6" type="submit">
-          Sign up
+        <Button className="w-full mt-6" type="submit" disabled={loading}>
+          {loading ? "Signing up..." : "Sign up"} {/* Show loading text */}
         </Button>
       </form>
       <div className="mx-auto my-4 flex w-full items-center justify-evenly before:mr-4 before:block before:h-px before:flex-grow before:bg-stone-400 after:ml-4 after:block after:h-px after:flex-grow after:bg-stone-400">

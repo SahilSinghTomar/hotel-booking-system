@@ -55,6 +55,7 @@ export const authOptions: NextAuthOptions = {
           id: existingUser.id,
           username: existingUser.username,
           email: existingUser.email,
+          image: existingUser.image,
         };
       },
     }),
@@ -65,6 +66,9 @@ export const authOptions: NextAuthOptions = {
         return {
           ...token,
           username: user.username,
+          email: user.email,
+          name: user.name,
+          image: user.image,
         };
       }
       return token;
@@ -76,6 +80,10 @@ export const authOptions: NextAuthOptions = {
         user: {
           ...session.user,
           username: token.username,
+          email: token.email,
+          name: token.name,
+          image: token.image as string | null, // Ensure the image is passed to the session
+          id: token.jti as string,
         },
       };
     },

@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="text-4xl flex flex-col items-center">
+    <div className="flex items-center">
       Home
       <Link className={buttonVariants()} href="/dashboard">
         Go to My Dashboard

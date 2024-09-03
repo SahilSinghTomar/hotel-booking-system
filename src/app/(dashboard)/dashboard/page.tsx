@@ -4,7 +4,6 @@ import React from "react";
 
 const page = async () => {
   const session = await getServerSession(authOptions);
-  console.log(session);
 
   if (!session) {
     return <div>Not authenticated! Please Login.</div>;

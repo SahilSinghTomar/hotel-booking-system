@@ -45,7 +45,7 @@ export default function SigninForm() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
     const signInData = await signIn("credentials", {
-      email: values.email,
+      email: values.email.trim(),
       password: values.password,
       redirect: false,
     });
@@ -94,7 +94,11 @@ export default function SigninForm() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="sahil@mail.com" {...field} />
+                  <Input
+                    placeholder="sahil@mail.com"
+                    {...field}
+                    disabled={loading}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -110,6 +114,7 @@ export default function SigninForm() {
                   <Input
                     type="password"
                     placeholder="Enter your password"
+                    disabled={loading}
                     {...field}
                   />
                 </FormControl>

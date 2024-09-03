@@ -10,7 +10,9 @@ const Navbar = async () => {
   return (
     <div className="bg-zinc-50 py-2 border-b border-s-zinc-200 fixed w-full z-10 top-0">
       <div className="flex items-center justify-between px-5">
-        <Link href="/">Logo</Link>
+        <Link className="font-semibold text-xl" href="/">
+          Tracky
+        </Link>
         {session?.user ? (
           <UserAccountnav />
         ) : (
