@@ -1,64 +1,46 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
-import { useToast } from "@/hooks/use-toast";
-import Image from "next/image";
-import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
+import useCurrentUser from "@/hooks/use-current-user";
 
-const UserAccountnav = () => {
-  const { toast } = useToast();
-  const session = useSession();
-  const [isDropdownOpen, setDropdownOpen] = useState(false);
+export const UserAccountNavBar = () => {
+  const user = useCurrentUser();
 
-  const handleSignout = async () => {
-    await signOut({
-      redirect: true,
-      callbackUrl: "/sign-in",
-    });
-    toast({
-      title: "Success",
-      description: "You have successfully signed out",
-    });
-  };
+  console.log(user);
 
   return (
-    <div className="relative flex">
-      <div onMouseEnter={() => setDropdownOpen(true)} className="relative">
-        {session.status === "loading" ? (
-          <div className="w-10 h-10 bg-gray-200 animate-pulse rounded-full"></div>
-        ) : (
-          <Image
-            src={session.data?.user.image!}
-            alt="Profile Photo"
-            height={40}
-            width={40}
-            className="rounded-full cursor-pointer object-cover"
-          />
-        )}
-        {isDropdownOpen && (
-          <div
-            className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
-            onMouseEnter={() => setDropdownOpen(true)}
-            onMouseLeave={() => setDropdownOpen(false)}
-          >
-            <Link
-              href="/profile"
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              Profile
-            </Link>
-            <button
-              onClick={handleSignout}
-              className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
-            >
-              Sign Out
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger>
+        <Avatar>
+          <AvatarImage src={user?.image || ""} />
+          <AvatarFallback>
+            {user?.name ? user.name[0].toUpperCase() : "U"}
+          </AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>{`Hello, ${
+          user?.name ? user.name.split(" ")[0] : "User"
+        }`}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <Link href="/dashboard">
+          <DropdownMenuItem>Dashboard</DropdownMenuItem>
+        </Link>
+        <Link href="/profile">
+          <DropdownMenuItem>Profile</DropdownMenuItem>
+        </Link>
+        <DropdownMenuItem onClick={() => signOut()}>Sign out</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
-
-export default UserAccountnav;

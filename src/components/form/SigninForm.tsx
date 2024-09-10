@@ -2,143 +2,180 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import * as z from "zod";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-
+import { SigninSchema } from "@/schemas";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import GoogleSigninButton from "../GoogleSigninButton";
-import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-
-const formSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email"),
-  password: z
-    .string()
-    .min(1, "Password is required")
-    .min(8, "Password must be at least 8 characters"),
-});
+import Socials from "../Socials";
+import { FormError } from "@/components/form-error";
+import { FormSuccess } from "@/components/form-success";
+import { signin } from "@/actions/signin";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
 
 export default function SigninForm() {
-  const { toast } = useToast();
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | undefined>("");
+  const [success, setSuccess] = useState<string | undefined>("");
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const clearQueryParams = useCallback(() => {
+    // Get the current URL without query parameters
+    const currentPath = window.location.pathname;
+
+    // Replace the current URL with the same path, but without any search parameters
+    router.replace(currentPath, { scroll: false });
+  }, [router]);
+
+  useEffect(() => {
+    // Check if the error is different from "OAuthAccountNotLinked"
+    if (error && error !== "OAuthAccountNotLinked") {
+      clearQueryParams();
+    }
+  }, [clearQueryParams, error]);
+
+  const urlError =
+    searchParams.get("error") === "OAuthAccountNotLinked"
+      ? "Email already use with different provider"
+      : "";
+
+  const form = useForm<z.infer<typeof SigninSchema>>({
+    resolver: zodResolver(SigninSchema),
     defaultValues: {
       email: "",
       password: "",
+      code: "",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setLoading(true);
-    const signInData = await signIn("credentials", {
-      email: values.email.trim(),
-      password: values.password,
-      redirect: false,
-    });
+  const onSubmit = (values: z.infer<typeof SigninSchema>) => {
+    setError("");
+    setSuccess("");
 
-    if (signInData?.error) {
-      // Handle error messages
-      if (signInData.error === "No user found with this email") {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "User does not exist",
-        });
-      } else if (signInData.error === "Incorrect credentials") {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Incorrect credentials",
-        });
-      } else if (signInData.error === "No password set for this user") {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No password set for this user! Login using Google",
-        });
+    startTransition(async () => {
+      const res = await signin(values);
+      setError(res.error);
+      setSuccess(res.success);
+      if (res.twoFactor) {
+        setShowTwoFactor(true);
       }
-    } else {
-      toast({
-        title: "Success",
-        description: "You have successfully signed in",
-      });
-      router.push("/dashboard");
-      router.refresh();
-    }
-
-    setLoading(false);
+    });
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="sahil@mail.com"
-                    {...field}
-                    disabled={loading}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+    <div className="flex flex-col justify-center">
+      <h1 className="text-2xl mb-5 font-semibold text-center text-gray-600 border-b pb-2">
+        Sign in to your account
+      </h1>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-4">
+            {showTwoFactor && (
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Two Factor code</FormLabel>
+                    <FormControl>
+                      <InputOTP maxLength={6} {...field}>
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </FormControl>
+                    <FormDescription>
+                      Please enter the two factor code sent to your email.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    placeholder="Enter your password"
-                    disabled={loading}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            {!showTwoFactor && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="sahil@mail.com"
+                          {...field}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="******"
+                          {...field}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <Button
+                        variant="link"
+                        asChild
+                        className="px-0 font-normal"
+                      >
+                        <Link href="/auth/reset">Forgot password?</Link>
+                      </Button>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
             )}
-          />
+          </div>
+          <FormError message={error || urlError} />
+          <FormSuccess message={success} />
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {showTwoFactor ? "Confirm" : "Sign in"}
+          </Button>
+        </form>
+        <div className="mx-auto my-4 flex w-full items-center justify-evenly before:mr-4 before:block before:h-px before:flex-grow before:bg-stone-400 after:ml-4 after:block after:h-px after:flex-grow after:bg-stone-400">
+          or
         </div>
-        <Button className="w-full mt-6" type="submit" disabled={loading}>
-          {loading ? "Signing in..." : "Sign in"}
-        </Button>
-      </form>
-      <div className="mx-auto my-4 flex w-full items-center justify-evenly before:mr-4 before:block before:h-px before:flex-grow before:bg-stone-400 after:ml-4 after:block after:h-px after:flex-grow after:bg-stone-400">
-        or
-      </div>
+        <Socials />
 
-      <GoogleSigninButton>Sign in with Google</GoogleSigninButton>
-
-      <p className="text-center text-sm text-gray-600 mt-2">
-        If you don&apos;t have an account, please&nbsp;
-        <Link href="/sign-up" className="text-blue-500 hover:underline ">
-          Sign up
-        </Link>
-      </p>
-    </Form>
+        <p className="text-center text-sm text-gray-600 mt-5">
+          If you don&apos;t have an account, please&nbsp;
+          <Link href="/auth/signup" className="text-blue-500 hover:underline ">
+            Sign up
+          </Link>
+        </p>
+      </Form>
+    </div>
   );
 }

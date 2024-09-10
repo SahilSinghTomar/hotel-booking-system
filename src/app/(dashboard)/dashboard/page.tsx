@@ -1,17 +1,16 @@
-import { authOptions } from "@/lib/auth";
-import { getServerSession } from "next-auth";
+"use client";
+
+import useCurrentUser from "@/hooks/use-current-user";
 import React from "react";
 
-const page = async () => {
-  const session = await getServerSession(authOptions);
+const Dashboard = () => {
+  const user = useCurrentUser();
 
-  if (!session) {
+  if (!user) {
     return <div>Not authenticated! Please Login.</div>;
   }
 
-  return (
-    <div>This is Dashboard {session.user.username || session.user.name}</div>
-  );
+  return <div className="flex items-center">{JSON.stringify(user)}</div>;
 };
 
-export default page;
+export default Dashboard;

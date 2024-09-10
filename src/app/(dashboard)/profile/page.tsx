@@ -1,11 +1,17 @@
-import { authOptions } from "@/lib/auth";
-import { getServerSession } from "next-auth";
+"use client";
 
-const page = async () => {
-  const session = await getServerSession(authOptions);
-  console.log(session);
+import ProfileForm from "@/components/form/ProfileForm";
+import useCurrentUser from "@/hooks/use-current-user";
+import React from "react";
 
-  return <div>{JSON.stringify(session)}</div>;
+const Profile = () => {
+  const user = useCurrentUser();
+
+  return (
+    <div>
+      <ProfileForm />
+    </div>
+  );
 };
 
-export default page;
+export default Profile;
