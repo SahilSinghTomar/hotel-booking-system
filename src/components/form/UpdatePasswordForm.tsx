@@ -68,6 +68,12 @@ export default function UpdatePasswordForm() {
         ) : (
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-4">
+              {!user?.hasPassword && (
+                <p className="text-center text-sm text-slate-500">
+                  You don&apos;t have a password yet.
+                </p>
+              )}
+
               {user?.hasPassword && (
                 <FormField
                   control={form.control}

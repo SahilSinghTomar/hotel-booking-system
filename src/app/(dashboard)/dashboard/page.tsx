@@ -1,5 +1,6 @@
 "use client";
 
+import { ProfilePicture } from "@/components/Profile-picture";
 import useCurrentUser from "@/hooks/use-current-user";
 import React from "react";
 
@@ -10,7 +11,14 @@ const Dashboard = () => {
     return <div>Not authenticated! Please Login.</div>;
   }
 
-  return <div className="flex items-center">{JSON.stringify(user)}</div>;
+  return (
+    <div className="">
+      {JSON.stringify(user)}
+      <p>
+        <ProfilePicture />
+      </p>
+    </div>
+  );
 };
 
 export default Dashboard;

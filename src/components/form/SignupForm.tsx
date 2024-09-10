@@ -20,6 +20,7 @@ import { signup } from "@/actions/signup";
 import { FormError } from "@/components/form-error";
 import { FormSuccess } from "@/components/form-success";
 import Socials from "../Socials";
+import { toast } from "sonner";
 
 export default function SignupForm() {
   const [loading, startTransition] = useTransition();
@@ -41,8 +42,14 @@ export default function SignupForm() {
 
     startTransition(async () => {
       const res = await signup(values);
-      setError(res.error);
-      setSuccess(res.success);
+      if (res.error) {
+        setError(res.error);
+      }
+
+      if (res.success) {
+        setSuccess(res.success);
+        toast.success("Account created successfully!");
+      }
     });
   };
 

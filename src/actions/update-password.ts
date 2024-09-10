@@ -15,9 +15,13 @@ export const settings = async (
     return { error: "User not found" };
   }
 
+  console.log(user);
+
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
   });
+
+  console.log("DB USER: ", dbUser);
 
   if (!dbUser) {
     return { error: "User not found" };

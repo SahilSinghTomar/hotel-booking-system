@@ -23,6 +23,7 @@ import { signin } from "@/actions/signin";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
+import { toast } from "sonner";
 
 export default function SigninForm() {
   const [isPending, startTransition] = useTransition();
@@ -43,14 +44,14 @@ export default function SigninForm() {
 
   useEffect(() => {
     // Check if the error is different from "OAuthAccountNotLinked"
-    if (error && error !== "OAuthAccountNotLinked") {
+    if (success || (error && error !== "OAuthAccountNotLinked")) {
       clearQueryParams();
     }
-  }, [clearQueryParams, error]);
+  }, [clearQueryParams, error, success]);
 
-  const urlError =
+  let urlError =
     searchParams.get("error") === "OAuthAccountNotLinked"
-      ? "Email already use with different provider"
+      ? "Email already use with different provider!"
       : "";
 
   const form = useForm<z.infer<typeof SigninSchema>>({
@@ -65,11 +66,22 @@ export default function SigninForm() {
   const onSubmit = (values: z.infer<typeof SigninSchema>) => {
     setError("");
     setSuccess("");
+    urlError = "";
 
     startTransition(async () => {
       const res = await signin(values);
-      setError(res.error);
-      setSuccess(res.success);
+      if (res.error) {
+        setError(res.error);
+      }
+
+      if (res.success) {
+        setSuccess(res.success);
+        if (res.success === "Confirmation email sent!") {
+          toast.warning("Please confirm your email before sign in.");
+        } else {
+          toast.success("Signed in successfully!");
+        }
+      }
       if (res.twoFactor) {
         setShowTwoFactor(true);
       }
