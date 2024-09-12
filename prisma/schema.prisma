@@ -7,8 +7,32 @@ datasource db {
   url  	    = env("DATABASE_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PAYPAL
+  UPI
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
 model User {
-  id            String    @id @default(cuid())
+  id            String    @id @default(uuid())
   name          String?
   email         String   @unique
   emailVerified DateTime? @map("email_verified")
@@ -20,63 +44,64 @@ model User {
   twoFactorConfirmation TwoFactorConfirmation?
   bookings      Booking[]
 
+  hotels           Hotel[]
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   @@map("users")
 }
 
-enum UserRole {
-  USER
-  ADMIN
-  HOTEL_OWNER
-}
-
 model Hotel {
-  id          String   @id @default(uuid())
-  name        String
-  location    String
-  rating      Int
-  roomTypes   RoomType[]
-  rooms       Room[]      // Reference to the rooms associated with this hotel
-  bookings    Booking[]   // Add this line to reference bookings associated with this hotel
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id       String   @id @default(uuid())
+  name     String
+  location String
+  roomType    RoomType[]
+  rates    Rate[]
+  bookings Booking[]
+  inventory Inventory[]
 
-  @@unique([name, location])  // Ensure unique hotel names per location
+  ownerId  String   // The user who created the hotel
+  owner    User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, location])
 }
-
 
 model RoomType {
-  id          String   @id @default(uuid())
-  name        String   // Type name, e.g., DELUXE, SUITE, etc.
-  description String?  // Optional description of the room type
-  price       Float    // Price per night
-  hotelId     String
-  hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
-  rooms       Room[]   // Rooms available under this type
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id       String   @id @default(uuid())
+  name     String
 
-  @@unique([hotelId, name])  // Ensure that room type names are unique within a hotel
+  hotelId  String
+  hotel    Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  rates    Rate[]
+  inventory Inventory[]
+  bookings Booking[]
 }
 
-
-model Room {
+model Rate {
   id          String   @id @default(uuid())
-  roomNumber  String   // Unique number for the room
-  available   Boolean  @default(true)  // Tracks availability for booking
+  hotelId     String
+  hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
   roomTypeId  String
   roomType    RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
-  hotelId     String
-  hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
-  bookings    Booking[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([roomTypeId, roomNumber])  // Ensure room numbers are unique within a room type
-  @@index([hotelId])  // Index to optimize queries based on hotel
+  rate        Float
+  date        DateTime
 }
+
+model Inventory {
+  id            String   @id @default(uuid())
+  hotelId       String
+  hotel         Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  roomTypeId    String
+  roomType      RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  date          DateTime
+  totalRooms    Int
+  availableRooms Int
+}
+
 
 
 model Booking {
@@ -84,7 +109,7 @@ model Booking {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   roomId      String
-  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomType    RoomType     @relation(fields: [roomId], references: [id], onDelete: Cascade)
   hotelId     String
   hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
   checkIn     DateTime
@@ -103,13 +128,6 @@ model Booking {
 }
 
 
-
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-}
-
 model Payment {
   id          String   @id @default(uuid())
   bookingId   String   @unique
@@ -121,18 +139,7 @@ model Payment {
   updatedAt   DateTime @updatedAt
 }
 
-enum PaymentMethod {
-  CREDIT_CARD
-  DEBIT_CARD
-  PAYPAL
-  UPI
-}
 
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-}
 
 model Offer {
   id          String   @id @default(uuid())
@@ -143,10 +150,8 @@ model Offer {
   bookings    Booking[]
 }
 
-
-
 model Account {
-  id                 String  @id @default(cuid())
+  id                 String  @id @default(uuid())
   userId             String  @map("user_id")
   type               String
   provider           String
@@ -166,7 +171,7 @@ model Account {
 }
 
 model VerificationToken {
-  id       String   @id @default(cuid())
+  id       String   @id @default(uuid())
   email    String
   token    String @unique
   expires  DateTime
@@ -175,7 +180,7 @@ model VerificationToken {
 }
 
 model ResetPasswordToken {
-  id       String   @id @default(cuid())
+  id       String   @id @default(uuid())
   email    String
   token    String @unique
   expires  DateTime
@@ -184,7 +189,7 @@ model ResetPasswordToken {
 }
 
 model TwoFactorToken {
-  id       String   @id @default(cuid())
+  id       String   @id @default(uuid())
   email    String
   token    String @unique
   expires  DateTime
@@ -193,7 +198,7 @@ model TwoFactorToken {
 }
 
 model TwoFactorConfirmation {
-  id       String   @id @default(cuid())
+  id       String   @id @default(uuid())
 
   userId    String
   user     User @relation(fields: [userId], references: [id], onDelete: Cascade)
