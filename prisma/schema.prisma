@@ -10,7 +10,7 @@ datasource db {
 model User {
   id            String    @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String   @unique
   emailVerified DateTime? @map("email_verified")
   password      String?
   role          UserRole @default(USER)
@@ -18,6 +18,10 @@ model User {
   accounts      Account[]
   isTwoFactorEnabled Boolean @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
+  bookings      Booking[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("users")
 }
@@ -25,7 +29,121 @@ model User {
 enum UserRole {
   USER
   ADMIN
+  HOTEL_OWNER
 }
+
+model Hotel {
+  id          String   @id @default(uuid())
+  name        String
+  location    String
+  rating      Int
+  roomTypes   RoomType[]
+  rooms       Room[]      // Reference to the rooms associated with this hotel
+  bookings    Booking[]   // Add this line to reference bookings associated with this hotel
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name, location])  // Ensure unique hotel names per location
+}
+
+
+model RoomType {
+  id          String   @id @default(uuid())
+  name        String   // Type name, e.g., DELUXE, SUITE, etc.
+  description String?  // Optional description of the room type
+  price       Float    // Price per night
+  hotelId     String
+  hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  rooms       Room[]   // Rooms available under this type
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([hotelId, name])  // Ensure that room type names are unique within a hotel
+}
+
+
+model Room {
+  id          String   @id @default(uuid())
+  roomNumber  String   // Unique number for the room
+  available   Boolean  @default(true)  // Tracks availability for booking
+  roomTypeId  String
+  roomType    RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  hotelId     String
+  hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([roomTypeId, roomNumber])  // Ensure room numbers are unique within a room type
+  @@index([hotelId])  // Index to optimize queries based on hotel
+}
+
+
+model Booking {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roomId      String
+  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  hotelId     String
+  hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  checkIn     DateTime
+  checkOut    DateTime
+  totalAmount Float
+  payment     Payment?
+  status      BookingStatus
+  offerCode   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  offer       Offer?   @relation(fields: [offerCode], references: [code])
+
+  @@unique([roomId, checkIn, checkOut]) // Ensure no double booking for the same room at the same time
+  @@index([hotelId])  // Index to optimize queries based on hotel
+}
+
+
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model Payment {
+  id          String   @id @default(uuid())
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount      Float
+  paymentMethod PaymentMethod
+  status      PaymentStatus
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PAYPAL
+  UPI
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model Offer {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  discount    Float
+  validFrom   DateTime
+  validTo     DateTime
+  bookings    Booking[]
+}
+
+
 
 model Account {
   id                 String  @id @default(cuid())
