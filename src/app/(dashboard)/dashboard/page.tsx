@@ -1,7 +1,9 @@
 "use client";
 
 import { ProfilePicture } from "@/components/Profile-picture";
+import { Button } from "@/components/ui/button";
 import useCurrentUser from "@/hooks/use-current-user";
+import Link from "next/link";
 import React from "react";
 
 const Dashboard = () => {
@@ -14,9 +16,9 @@ const Dashboard = () => {
   return (
     <div className="">
       {JSON.stringify(user)}
-      <p>
-        <ProfilePicture />
-      </p>
+      <Button>
+        <Link href="/host">My Hotels</Link>
+      </Button>
     </div>
   );
 };

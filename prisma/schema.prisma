@@ -55,7 +55,17 @@ model User {
 model Hotel {
   id       String   @id @default(uuid())
   name     String
-  location String
+  address  String
+  country  String
+  city     String
+  state    String
+  zip      String
+  phone    String
+  email    String   @unique
+  website  String?
+  description String?
+  image    String[]
+
   roomType    RoomType[]
   rates    Rate[]
   bookings Booking[]
@@ -66,8 +76,6 @@ model Hotel {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@unique([name, location])
 }
 
 model RoomType {
@@ -79,6 +87,23 @@ model RoomType {
   rates    Rate[]
   inventory Inventory[]
   bookings Booking[]
+  amenities RoomTypeAmenities[]
+}
+
+model Amenities {
+  id       String   @id @default(uuid())
+  amenityType  String
+  value     String
+
+  roomTypeAmenities RoomTypeAmenities[]
+}
+
+model RoomTypeAmenities {
+  id          String   @id @default(uuid())
+  roomTypeId  String
+  roomType    RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  amenityId   String
+  amenity     Amenities @relation(fields: [amenityId], references: [id], onDelete: Cascade)
 }
 
 model Rate {

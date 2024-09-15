@@ -1,6 +1,6 @@
 import NextAuth, { type DefaultSession } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { PrismaClient } from "@prisma/client";
+import { Hotel, PrismaClient } from "@prisma/client";
 import authConfig from "@/auth.config";
 
 import { JWT } from "next-auth/jwt";
@@ -11,6 +11,7 @@ declare module "next-auth/jwt" {
     isTwoFactorEnabled?: boolean;
     isOAuth?: boolean;
     hasPassword?: boolean;
+    hotels?: Hotel[];
   }
 }
 
@@ -21,6 +22,7 @@ declare module "next-auth" {
       isTwoFactorEnabled: boolean;
       isOAuth: boolean;
       hasPassword: boolean;
+      hotels: Hotel[];
     } & DefaultSession["user"];
   }
 }
@@ -54,12 +56,19 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         },
       });
 
+      const hotels = await prisma.hotel.findMany({
+        where: {
+          ownerId: existingUser.id,
+        },
+      });
+
       token.isOAuth = !!existingAccount;
       token.role = existingUser.role;
       token.name = existingUser.name;
       token.email = existingUser.email;
       token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled;
       token.hasPassword = !!existingUser.password;
+      token.hotels = hotels;
 
       return token;
     },
@@ -89,6 +98,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
       if (token.hasPassword && session.user) {
         session.user.hasPassword = token.hasPassword;
+      }
+
+      if (token.hotels && session.user) {
+        session.user.hotels = token.hotels;
       }
 
       return session;
