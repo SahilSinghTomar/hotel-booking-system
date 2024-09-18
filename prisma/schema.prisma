@@ -38,7 +38,7 @@ model User {
   emailVerified DateTime? @map("email_verified")
   password      String?
   role          UserRole @default(USER)
-  image         String?
+  image         String    @default("https://res.cloudinary.com/dlriuadjv/image/upload/v1725295816/rzfzi0cue3byjl5krckh.jpg")
   accounts      Account[]
   isTwoFactorEnabled Boolean @default(false)
   twoFactorConfirmation TwoFactorConfirmation?
@@ -61,7 +61,7 @@ model Hotel {
   state    String
   zip      String
   phone    String
-  email    String   @unique
+  email    String
   website  String?
   description String?
   image    String[]

@@ -31,7 +31,6 @@ export const POST = async (req: NextRequest) => {
     email,
     website,
     description,
-    image,
   } = validatedField.data;
 
   try {
@@ -47,12 +46,11 @@ export const POST = async (req: NextRequest) => {
         email,
         website,
         description,
-        image,
         ownerId: userId,
       },
     });
 
-    NextResponse.json(
+    return NextResponse.json(
       { success: "Hotel created Successfully!" },
       { status: 201 }
     );

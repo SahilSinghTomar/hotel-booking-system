@@ -55,9 +55,8 @@ export const CreateHotelSchema = z.object({
   zip: z.string().min(1, "Zip is required"),
   phone: z.string().min(1, "Phone is required"),
   email: z.string().min(1, "Email is required").email("Invalid email"),
-  website: z.string().min(1, "Website is required"),
   description: z.string().min(1, "Description is required"),
-  image: z.array(z.string()).min(1, "Image is required"),
+  website: z.optional(z.string()),
 });
 
 export const UpdateHotelSchema = z.object({

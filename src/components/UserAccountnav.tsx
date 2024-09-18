@@ -13,9 +13,17 @@ import { signOut } from "next-auth/react";
 import Link from "next/link";
 import useCurrentUser from "@/hooks/use-current-user";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export const UserAccountNavBar = () => {
+  const router = useRouter();
+
   const user = useCurrentUser();
+
+  if (!user || !user.image) {
+    router.push("/auth/sign-in");
+    return;
+  }
 
   const handleSignout = () => {
     signOut();
@@ -26,7 +34,7 @@ export const UserAccountNavBar = () => {
     <DropdownMenu>
       <DropdownMenuTrigger>
         <Avatar>
-          <AvatarImage src={user?.image || ""} />
+          <AvatarImage src={user?.image} />
           <AvatarFallback>
             {user?.name ? user.name[0].toUpperCase() : "U"}
           </AvatarFallback>

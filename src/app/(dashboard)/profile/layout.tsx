@@ -3,10 +3,8 @@
 import useCurrentUser from "@/hooks/use-current-user";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React from "react";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { ProfilePicture } from "@/components/Profile-picture";
 
 const ProfileLayout = ({ children }: { children: React.ReactNode }) => {
   const user = useCurrentUser();
@@ -24,7 +22,7 @@ const ProfileLayout = ({ children }: { children: React.ReactNode }) => {
             className="rounded-lg cursor-pointer border-white border-4"
             width={100}
             height={100}
-            layout="fixed"
+            priority
           />
         </div>
         <div className="w-3/5 items-start text-2xl font-semibold text-slate-200">

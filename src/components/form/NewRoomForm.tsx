@@ -30,7 +30,7 @@ import { useSession } from "next-auth/react";
 import { FormSuccess } from "@/components/form-success";
 import { FormError } from "@/components/form-error";
 
-const NewHotelForm = () => {
+const NewRoomForm = () => {
   const { update } = useSession();
   // const [countriesList, setCountriesList] = useState([]);
   // const [stateList, setStateList] = useState([]);
@@ -325,4 +325,4 @@ const NewHotelForm = () => {
   );
 };
 
-export default NewHotelForm;
+export default NewRoomForm;
